@@ -1,8 +1,14 @@
-# star-web — Spacetime Gravity-Well Console
+# Spacetime Gravity-Well Console
 
 Interactive visualization of how compact objects warp a spacetime sheet — a wireframe
 mesh whose well shape, depth and spin are **derived from each body's real mass and
 radius**, not hand-tuned per object.
+
+![Cygnus X-1: the spacetime mesh stretched into a funnel with no visible bottom](docs/screenshots/cygnus-x-1.png)
+
+*Cygnus X-1 (stellar-mass black hole). The HUD's `EVENT HORIZON DISTANCE 1.000 Rs` /
+`JET ALIGNMENT 1.00c` / `FIELD DISTORTION EXTREME` are computed from mass and radius, and
+the funnel runs off the bottom of the frame because `2Ψ → 1` makes the depth diverge.*
 
 ## Origin
 
@@ -134,12 +140,16 @@ scripts/                  dev-only capture & comparison helpers (Node .mjs)
   `src/scene/profiles/<id>.ts` file. That directory no longer exists — shape is now
   derived entirely from `src/scene/physics.ts`. The docs are kept as design history.
 - Screenshot output (`shots/`) and the reference frames (`reference_images/`) are
-  gitignored. `scripts/refcmp.mjs` and the `scripts/shot*.mjs` helpers expect
-  `reference_images/` to exist locally, so they won't run on a fresh clone.
+  gitignored; `docs/screenshots/` is a manual copy kept only for this README.
+  `scripts/refcmp.mjs` and the `scripts/shot*.mjs` helpers expect `reference_images/`
+  to exist locally, so they won't run on a fresh clone.
 - Not a scientific instrument: display values are compressed for readability, and
   Schwarzschild radii / compactness are the honest parts.
 
 ## License
 
-No license file yet — all rights reserved by default. `private: true` in `package.json`
-only stops accidental npm publishing; it has no effect on GitHub visibility.
+MIT — see [LICENSE](LICENSE).
+
+This is a reproduction of a UI concept shown in a third-party video (see
+[Origin](#origin)). The license covers the code in this repository; it does not grant any
+rights over the original author's design, video, or name.
