@@ -9,3 +9,8 @@ shots/
 reference_images/
 .zcode/
 .agent-teams/
+
+# 桌面壁纸构建产物（由 npm run build:desktop 生成）
+desktop/web/
+desktop/macos/build/
+desktop/release/

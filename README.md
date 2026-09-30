@@ -109,10 +109,44 @@ React 19 · TypeScript · Vite 7 · three.js 0.180. CSS Grid layout, design toke
 
 ```bash
 npm install
-npm run dev        # vite dev server
-npm run build      # tsc --noEmit && vite build
-npm run preview    # serve the production build
+npm run dev             # vite dev server
+npm run build           # tsc --noEmit && vite build → dist/
+npm run build:desktop   # single-file desktop/web/index.html (see below)
+npm run preview         # serve the production build
 ```
+
+## As a desktop wallpaper
+
+`desktop/` turns the console into a live desktop background.
+
+**macOS: download `GravityWellDesktop-*-macOS.zip` from
+[Releases](https://github.com/Zhenghong-Liu/spacetime-gravity-well/releases), unzip,
+double-click.** The app carries the site inside it, moves itself to `~/Applications` and
+registers its own login item on first launch — one click, no Terminal, no network, no
+Node or Xcode required. `卸载.command` in the same zip undoes all of it.
+
+Building from source instead:
+
+```bash
+bash desktop/install-macos.sh       # build → .app in ~/Applications → launch
+bash desktop/uninstall-macos.sh     # undo everything
+bash desktop/macos/make-release.sh  # produce the release assets
+```
+
+macOS ships a ~300-line native shell (`desktop/macos/`) that pins a `WKWebView` to the
+desktop window layer, so the console sits under the Dock and above the desktop icons —
+you can drag to orbit the well straight from the desktop, and a menu-bar item switches
+back to a click-through ambient layer.
+
+Windows and Ubuntu reuse the same single-file build instead of custom code: Lively
+Wallpaper loads `desktop/web/index.html` directly, and `desktop/linux/desktop-x11.sh`
+lowers a kiosk browser to the desktop layer with `wmctrl`. Wayland has no API for that —
+see [desktop/README.md](desktop/README.md) for the details and caveats.
+
+The build is inlined into **one HTML file with zero external requests** on purpose:
+WebKit and Chromium both refuse to load ES modules cross-origin from `file://`, so a
+multi-file build silently renders the shell and never starts React. No local HTTP server
+is involved anywhere.
 
 ## Repository layout
 
@@ -130,6 +164,10 @@ src/
   components/             TopBar / LeftRail / CenterStage / RightRail / BottomBar
   instruments/            AccretionDial / ShearScope / HexHeatmap
   styles/                 global.css, tokens.css
+desktop/                  wallpaper packaging (see desktop/README.md)
+  macos/                  native desktop-layer shell + build/install scripts
+  linux/                  X11 kiosk-to-desktop-layer script
+  web/                    build:desktop output (gitignored)
 docs/                     design notes (see caveat below)
 scripts/                  dev-only capture & comparison helpers (Node .mjs)
 ```
