@@ -6,8 +6,9 @@
 
 import { spawn } from 'node:child_process';
 import { writeFileSync, mkdirSync } from 'node:fs';
+import { findBin } from './browser.mjs';
 
-const BIN = '/Users/liuzh/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell';
+const BIN = findBin();
 const PORT = 9334;
 const TARGET = 'http://127.0.0.1:5199';
 const OUT_DIR = new URL('../shots/', import.meta.url);

@@ -32,11 +32,11 @@ import { spawn } from 'node:child_process';
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
+import { findBin } from './browser.mjs';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const CFG = JSON.parse(readFileSync(join(ROOT, 'scripts/refmap.json'), 'utf8'));
-const BIN =
-  '/Users/liuzh/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell';
+const BIN = findBin();
 const TARGET = 'http://127.0.0.1:5199';
 const BANDS = 24;
 const VIEW_W = 852;

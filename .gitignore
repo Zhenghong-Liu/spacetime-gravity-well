@@ -10,6 +10,9 @@ reference_images/
 .zcode/
 .agent-teams/
 
+# 一次性调参脚本（绑死某轮任务的 shots/*.png 产物，只在本机留档）
+scripts/scratch/
+
 # 桌面壁纸构建产物（由 npm run build:desktop 生成）
 desktop/web/
 desktop/macos/build/

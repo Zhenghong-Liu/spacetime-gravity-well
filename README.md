@@ -74,6 +74,13 @@ Spin is the Keplerian angular velocity of the sheet, evaluated at the body's sur
 
 so smaller bodies spin faster — angular momentum conservation showing up directly.
 
+Infalling particles are integrated in **steady state**: each body carries one constant
+radial drift speed (`accretionSpeed` in `src/scene/bodyVisuals.ts`), and every particle's
+angular momentum is a fixed sub-circular ratio `f = L / L_circ(r)` re-evaluated against the
+live `(μ, a)`. The swirl therefore still tightens and accelerates as a particle falls
+(conservation of angular momentum), but the *flow rate* never runs away the way an
+exponentially decaying `L` would as `r → a`.
+
 The three top-right HUD readouts are pure SI derivations with **no display compression**,
 so they are monotonic in compactness across all six bodies:
 
@@ -93,6 +100,22 @@ so they are monotonic in compactness across all six bodies:
 - **Left rail** — body cards with hex digests and progress bars.
 - **Right rail** — instruments: accretion dial, shear waveform scope, hex heatmap.
 - **Top / bottom bars** — mass ratio, distance to singularity, status line.
+
+### Adaptive rails
+
+Both rails are laid out against measurements taken from the reference frame at 1440×820,
+and taller windows have more height than that rhythm needs. Rather than stretching card
+interiors or floating the instruments apart, the surplus goes to two named places:
+
+- Left rail: the 6 cards share `rail height − 7.5%`, and the trailing empty slot from the
+  reference is a fixed `7.5%` of the column — so the bottom margin stays the same fraction
+  of the rail instead of doubling with the window.
+- Right rail: inter-section gaps grow from 26px up to `clamp(46px, 5svh, 64px)`, and
+  everything past that cap lands in a trailing spacer. At the reference's own height the
+  spacer is 0, which reproduces the reference layout exactly.
+
+`node scripts/layout.mjs 1440x932 1440x820` prints the resulting slot heights and takes a
+screenshot per size; it also clicks a card to prove the trailing slots stay hit-testable.
 
 Rendering detail: the height field is evaluated as *ring × spoke* rather than per-vertex.
 Potential and radial waves depend only on `r`, and the azimuthal modes are separable, so a
@@ -169,7 +192,12 @@ desktop/                  wallpaper packaging (see desktop/README.md)
   linux/                  X11 kiosk-to-desktop-layer script
   web/                    build:desktop output (gitignored)
 docs/                     design notes (see caveat below)
-scripts/                  dev-only capture & comparison helpers (Node .mjs)
+scripts/                  dev-only helpers (Node .mjs, no dependencies):
+  browser.mjs             headless Chromium lookup shared by the rest
+  layout.mjs              rail/HUD geometry readings + screenshots at several window sizes
+  shot_all.mjs            per-body viewport screenshots → shots/
+  motion.mjs              two-frame diff proving the waves / shockfront are alive
+  refcmp.mjs              viewport-vs-reference-frame alignment scorer
 ```
 
 ## Notes & caveats
@@ -179,8 +207,12 @@ scripts/                  dev-only capture & comparison helpers (Node .mjs)
   derived entirely from `src/scene/physics.ts`. The docs are kept as design history.
 - Screenshot output (`shots/`) and the reference frames (`reference_images/`) are
   gitignored; `docs/screenshots/` is a manual copy kept only for this README.
-  `scripts/refcmp.mjs` and the `scripts/shot*.mjs` helpers expect `reference_images/`
-  to exist locally, so they won't run on a fresh clone.
+  `scripts/refcmp.mjs` scores against `reference_images/`, so it can't run on a fresh
+  clone. The other helpers only need a dev server on `127.0.0.1:5199` and a headless
+  Chromium (`scripts/browser.mjs` picks one from `CHROME_BIN`, the Playwright cache or
+  the system Chrome).
+- `scripts/scratch/` (gitignored) holds the one-off tuning scripts from development. They
+  are wired to intermediate artifacts of a specific session and are not meant to run.
 - Not a scientific instrument: display values are compressed for readability, and
   Schwarzschild radii / compactness are the honest parts.
 
