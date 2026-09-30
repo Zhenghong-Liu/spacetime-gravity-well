@@ -1,0 +1,42 @@
+/*
+ * 设计 tokens —— 颜色/字体/布局尺寸。
+ * 颜色为 reference.png 直接取样（PIL 中位数采样，PNG 无 ICC 配置，原始值即 sRGB）：
+ *   顶栏底栏 #d2d7c7 · 左右栏与卡片 #dce1d5 · 3D 视口 #d4ddd1 · 画布留边 #dce1d5
+ *   选中卡黑底 #060606 · 标题红 #fb2b19 · 选中卡进度条红 #fa4d34
+ *   虚线分隔 #9b9f92 · 未填充轨道 #b9bfb1
+ * 布局尺寸为参考图分隔线实测值（@2x 截图 / 2）：
+ *   参考图最外层是设计画布：终端框不贴边 —— 左留 6px、上留 9px、右留 5px、下贴边
+ *   （画布左右边缘各有一条 1px 蓝线，属截图工具痕迹，不复刻）。
+ *   外框 2px · 顶栏 80px · 底栏 38px（ticker 行 27px + 1px 分隔线 + 10px 渐变条）
+ *   左栏 267px · 右栏 306px
+ */
+:root {
+  /* 颜色 */
+  --ink: #16181a;
+  --ink-soft: #62695f;
+  --bg-app: #d2d7c7;
+  --bg-panel: #dce1d5;
+  --bg-canvas: #dce1d5;
+  --bg-stage: #d4ddd1;
+  --bg-selected: #060606;
+  --accent: #fb2b19;
+  --accent-bar: #fa4d34;
+  --line: #16181a;
+  --line-dash: #9b9f92;
+  --track: #b9bfb1;
+
+  /* 字体 */
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
+    'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-mono: 'Courier New', Courier, monospace;
+
+  /* 布局 */
+  --frame-w: 2px;
+  --canvas-top: 9px;
+  --canvas-left: 6px;
+  --canvas-right: 5px;
+  --topbar-h: 80px;
+  --bottombar-h: 38px;
+  --rail-left-w: 267px;
+  --rail-right-w: 306px;
+}

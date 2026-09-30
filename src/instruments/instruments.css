@@ -1,0 +1,126 @@
+/*
+ * 右栏三仪表样式（ShearScope / AccretionDial / HexHeatmap）。
+ * 仪表局部色值按 reference.png 取样，作用域收敛在各自类内，不进全局。
+ */
+
+/* ===== 1. GRAVITATIONAL SHEAR GRADIENT —— 示波器 ===== */
+.shear {
+  position: relative;
+  margin: 12px 0 0 18px;
+  width: 267px;
+  height: 143px;
+  background: #c0c9bf;
+  border: 1px solid #969d90;
+}
+
+.shear__cv {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.shear__legend {
+  position: absolute;
+  top: 4px;
+  right: 11px;
+  display: flex;
+  flex-direction: column;
+}
+
+.shear__row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 9.6px;
+}
+
+.shear__swatch {
+  flex: 0 0 auto;
+}
+
+.shear__lbl {
+  margin-left: 5px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 7px;
+  line-height: 1;
+  letter-spacing: 0.5px;
+  color: #2c302a;
+  white-space: nowrap;
+}
+
+/* ===== 2. MASS ACCRETION FLOW RATE —— 圆形表盘 ===== */
+.dial__svg {
+  display: block;
+  margin: 10px 0 0 7px;
+}
+
+.dial__ring {
+  fill: none;
+  stroke: #7d8276;
+  stroke-width: 1.2;
+}
+
+.dial__ring-thin {
+  fill: none;
+  stroke: #9aa091;
+  stroke-width: 1;
+}
+
+.dial__ring-inner {
+  fill: none;
+  stroke: #4a4f45;
+  stroke-width: 1;
+}
+
+.dial__leader {
+  stroke: #6a705f;
+  stroke-width: 1;
+}
+
+.dial__tb {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 8px;
+  fill: #2c302a;
+}
+
+.dial__t text,
+.dial__t-s text,
+.dial__t-xs text {
+  font-family: var(--font-mono);
+  fill: #3f443c;
+}
+
+.dial__t text {
+  font-size: 7.5px;
+}
+
+.dial__t-s text {
+  font-size: 6px;
+}
+
+.dial__t-xs text {
+  font-size: 5.5px;
+}
+
+.dial__rate {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 6.5px;
+  fill: #3f443c;
+}
+
+/* ===== 3. TEMPERATURE DISTRIBUTION —— 蜂窝热图 ===== */
+.heat__svg {
+  display: block;
+  margin: 15px 0 0 18px;
+}
+
+.heat__lbl text {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  fill: #3f443c;
+}

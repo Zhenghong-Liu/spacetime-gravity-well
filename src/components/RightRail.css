@@ -1,0 +1,53 @@
+/* RightRail —— 右栏仪表带。
+ * 垂直节奏按 reference.png 实测（rail 相对坐标，rail 高 689）：
+ *   标题1 cap 14.5 · 示波器 38-181 · 分隔条 197-201 · 标题2 cap 229.5
+ *   表盘 svg 244-508 · 分隔条 524-528 · 标题3 cap 551.5 · 热图 576.5-670.5
+ * 水平：标题左边距 19，面板/分隔条左边距 18、宽 267（1147-1414，与参考一致），
+ * 表盘 svg 左边距 6（表盘中心投影 x≈1280）。
+ */
+.rightrail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  background: var(--bg-panel);
+}
+
+/* 小节标题：重无衬线 900（参考图为黑体级字重），cap 高实测 10px → 14px 字号 */
+.rightrail__h2 {
+  margin: 0 0 0 19px;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 14px;
+  line-height: 10px;
+  letter-spacing: 0.5px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.rightrail__h2--first {
+  margin-top: 16px;
+}
+
+.rightrail__h2--dial {
+  margin-top: 27px;
+}
+
+.rightrail__h2--heat {
+  margin-top: 22px;
+}
+
+/* 浅灰分隔条 */
+.rightrail__divider {
+  width: 267px;
+  height: 4px;
+  margin-left: 18px;
+  background: #c3c8ba;
+}
+
+.rightrail__divider--1 {
+  margin-top: 16px;
+}
+
+.rightrail__divider--2 {
+  margin-top: 14px;
+}

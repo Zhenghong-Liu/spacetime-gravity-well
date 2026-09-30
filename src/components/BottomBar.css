@@ -1,0 +1,238 @@
+/*
+ * BottomBar —— 底部状态栏。实测：总高 38px = ticker 行 27px + 1px 黑分隔线
+ * + 10px 渐变条；REC 格 65px、FPS 格 71px；文字 11px 等宽
+ * （普通文案深灰 #454a40，加粗值 --ink）。REC 白色指示条贴在 ticker 行底。
+ * 动效：REC 前 6px 红点呼吸（opacity 1↔0.2，1.2s）；中部 ticker 为 rAF 驱动
+ * 右→左无缝跑马灯（~70px/s，内容复制两份）；[WARNING] 常态每 ~2.4s 轻闪
+ * （opacity 1↔0.55，~300ms），cygnus-x-1（data-body）下 0.8s 快闪（最低 0.35），
+ * 切换天体瞬间一次性 350ms 高亮脉冲；FPS 为真实帧率。
+ * 右下角白底黑框小方块压在外框角上（与顶栏左上角呼应）。
+ */
+.bottombar {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-mono);
+}
+
+.bottombar__row {
+  flex: 0 0 27px;
+  display: flex;
+  align-items: stretch;
+  background: linear-gradient(180deg, #d4d9c8 0%, #cfd4c6 55%, #c2c7b9 100%);
+}
+
+/* 底部渐变条（1px 黑线由 border-top 提供） */
+.bottombar__strip {
+  flex: 1 1 auto;
+  border-top: 1px solid #0a0c06;
+  background: linear-gradient(180deg, #b4b9ab 0%, #9ea39a 100%);
+}
+
+/* ---- REC 格 ---- */
+.bottombar__rec {
+  position: relative;
+  flex: 0 0 65px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding-left: 12px;
+  border-right: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--ink);
+}
+
+/* REC 文字前 6px 红点：呼吸闪烁 opacity 1↔0.2，~1.2s */
+.bottombar__recDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fb2b19;
+  animation: bottombar-recdot-blink 1.2s ease-in-out infinite;
+}
+
+@keyframes bottombar-recdot-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+/* REC 底部白色指示条（贴 ticker 行底），缓慢呼吸 */
+.bottombar__rec::after {
+  content: '';
+  position: absolute;
+  left: 1px;
+  bottom: 2px;
+  width: 32px;
+  height: 2px;
+  background: #fbfcf7;
+  animation: bottombar-rec-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes bottombar-rec-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* ---- 中部 ticker（溢出隐藏，右缘被 FPS 格截断） ---- */
+.bottombar__ticker {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 14px;
+  color: #3c413a;
+}
+
+/* rAF 驱动的内层 track（translateX 由 JS 写入），宽 = 两组内容 */
+.bottombar__tickerTrack {
+  display: flex;
+  flex: 0 0 auto;
+  width: max-content;
+  will-change: transform;
+}
+
+/* 单组内容（复制两份实现无缝循环） */
+.bottombar__tickerSet {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.bottombar__sep {
+  margin: 0 16px;
+}
+
+.bottombar__item b {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* [WARNING] 红字加粗：常态每 ~2.4s 轻闪一次（opacity 1↔0.55，窗口 ~300ms） */
+.bottombar__warning {
+  color: var(--accent);
+  font-weight: 700;
+  animation: bottombar-warning-blink 2.4s ease-in-out infinite;
+}
+
+@keyframes bottombar-warning-blink {
+  0%,
+  10% {
+    opacity: 1;
+  }
+  16% {
+    opacity: 0.55;
+  }
+  22%,
+  100% {
+    opacity: 1;
+  }
+}
+
+/* cygnus-x-1（footer data-body）：闪烁更快更醒目（周期 ~0.8s，最低 0.35） */
+.bottombar[data-body='cygnus-x-1'] .bottombar__warning {
+  animation: bottombar-warning-blink-fast 0.8s ease-in-out infinite;
+}
+
+@keyframes bottombar-warning-blink-fast {
+  0%,
+  10% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+  90%,
+  100% {
+    opacity: 1;
+  }
+}
+
+/* [NOTE] 红字加粗（不闪烁） */
+.bottombar__note {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* 段末 2px 活动小点：缓慢闪烁，极克制 */
+.bottombar__itemDot {
+  display: inline-block;
+  width: 2px;
+  height: 2px;
+  margin-left: 5px;
+  border-radius: 50%;
+  background: #7d8374;
+  vertical-align: middle;
+  animation: bottombar-itemdot-blink 2.6s ease-in-out infinite;
+}
+
+@keyframes bottombar-itemdot-blink {
+  0%,
+  100% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* 切换天体瞬间：warning 段一次性 350ms 高亮脉冲
+   （置于上一条规则之后，确保覆盖 cygnus 快闪） */
+.bottombar__tickerTrack--pulse .bottombar__warning {
+  animation: bottombar-warning-pulse 350ms ease-out 1;
+}
+
+@keyframes bottombar-warning-pulse {
+  0% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.55;
+    filter: brightness(1.8);
+  }
+  100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+/* ---- FPS 格 ---- */
+.bottombar__fps {
+  flex: 0 0 71px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-left: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--ink);
+}
+
+/* 右下角装饰方块：白底黑框（约 14px），嵌在应用外框角上 */
+.bottombar__corner {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--line);
+  background: #edf0e8;
+}

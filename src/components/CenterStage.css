@@ -1,0 +1,217 @@
+/*
+ * CenterStage —— 中间 3D 视口叠加标注层。
+ * 尺寸/字号均按 reference.png 实测（@2x 截图 ÷2）：
+ *   标题 30px/800 字重 +0.06em · 02.2 24px · SIMULATION CORE VER. 12px 等宽
+ *   读数行距 16.5px · 标签 12px 弱灰 · 值 13.5px 加粗近黑
+ *   SINGULARITY ENGINE 22px · 底部等宽行 11px 红橙
+ * 叠加层全部 pointer-events:none，保证 three.js 轨道拖拽/滚轮不被遮挡。
+ */
+
+.stage {
+  position: relative;
+  background: var(--bg-stage);
+}
+
+.stage__viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.stage__viewport canvas {
+  display: block;
+}
+
+/* ---- 四角 L 形括号（1px 近黑，距边 8px；臂长按参考图逐角实测：
+ *   左上 17×19 · 右上 19×16（距右 18px）· 左下竖臂 36/横臂 18 · 右下 18×18） ---- */
+
+.stage__corner {
+  position: absolute;
+  pointer-events: none;
+  color: var(--ink);
+}
+
+.stage__corner--tl {
+  top: 8px;
+  left: 8px;
+  width: 17px;
+  height: 19px;
+  border-top: 1px solid var(--ink);
+  border-left: 1px solid var(--ink);
+}
+
+.stage__corner--tr {
+  top: 9px;
+  right: 18px;
+  width: 19px;
+  height: 16px;
+  border-top: 1px solid var(--ink);
+  border-right: 1px solid var(--ink);
+}
+
+.stage__corner--bl {
+  bottom: 8px;
+  left: 8px;
+  width: 18px;
+  height: 36px;
+  border-bottom: 1px solid var(--ink);
+  border-left: 1px solid var(--ink);
+}
+
+.stage__corner--br {
+  bottom: 8px;
+  right: 8px;
+  width: 18px;
+  height: 18px;
+  border-bottom: 1px solid var(--ink);
+  border-right: 1px solid var(--ink);
+}
+
+/* ---- 左上：大红标题 + 02.2 + SIMULATION CORE VER. ---- */
+
+.stage__headlineBlock {
+  position: absolute;
+  top: 12px;
+  left: 20px;
+  pointer-events: none;
+}
+
+.stage__headline {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.stage__version {
+  margin-top: 0;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.15em;
+  color: var(--ink);
+}
+
+.stage__corever {
+  margin-top: 6px;
+  margin-left: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+}
+
+/* ---- 右上：三行读数（标签弱灰 + 值加粗近黑，两列各自右对齐） ---- */
+
+.stage__readouts {
+  position: absolute;
+  top: 16px;
+  right: 6px;
+  pointer-events: none;
+}
+
+.stage__readout {
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 20px;
+  justify-content: end;
+  align-items: baseline;
+  line-height: 16.5px;
+}
+
+.stage__readout dt {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: #3b4038;
+  white-space: pre;
+}
+
+.stage__readout dd {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: pre;
+}
+
+/* ---- 天体切换淡入：标题与三个读数值 key 重挂载后 ~180ms 淡入 + 2px 上移（与 3D morph 同步干脆） ---- */
+
+@keyframes stage-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stage__headline,
+.stage__readoutValue {
+  animation: stage-fade-in 180ms ease-out both;
+}
+
+/* ---- 左下：SINGULARITY ENGINE / 02.2 / ▶ 等宽行 ---- */
+
+.stage__engine {
+  position: absolute;
+  left: 20px;
+  bottom: 12px;
+  pointer-events: none;
+}
+
+.stage__engineTitle {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.135em;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.stage__engineVersion {
+  margin-top: 3px;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  color: var(--ink);
+}
+
+.stage__engineMeta {
+  margin-top: 4px;
+  display: flex;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: #787e72;
+  white-space: nowrap;
+}
+
+.stage__engineGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+/* 红色实心小三角（▶），用 clip-path 保证跨平台字形一致 */
+.stage__triangle {
+  width: 7px;
+  height: 9px;
+  background: var(--accent);
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  flex: none;
+}

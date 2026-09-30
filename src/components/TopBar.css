@@ -1,0 +1,198 @@
+/*
+ * TopBar —— 顶栏五格。列宽 / 字号 / 行位均按 reference.png @2x 实测（CSS px）：
+ *   时间戳格 221px · 三个右格各 124px · 大标题格 1fr（约 843px）
+ *   分隔线 1px 黑竖线；左上角有一个白底黑框小方块压在外框角上。
+ */
+.topbar {
+  position: relative;
+  display: grid;
+  grid-template-columns: 220px 1fr repeat(3, 124px);
+  background: var(--bg-app);
+  font-family: var(--font-mono);
+  color: var(--ink);
+}
+
+.topbar__headline,
+.topbar__cell {
+  border-left: 1px solid var(--line);
+  min-width: 0;
+}
+
+/* ---- 格① 时间戳 ---- */
+.topbar__timestamp {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 10px 16px 0 14px;
+}
+
+.topbar__label {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 13px;
+  letter-spacing: 0;
+}
+
+.topbar__label--small {
+  margin-top: 2px;
+  font-size: 9px;
+  line-height: 10px;
+  letter-spacing: 0;
+}
+
+.topbar__date {
+  margin-top: 2px;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 1.2px;
+  line-height: 28px;
+}
+
+/* 条码：不等宽黑白竖条 repeating-linear-gradient */
+.topbar__barcode {
+  margin-top: 5px;
+  width: 178px;
+  height: 14px;
+  background: repeating-linear-gradient(
+    90deg,
+    #10120f 0 2px,
+    transparent 2px 3px,
+    #10120f 3px 5px,
+    transparent 5px 6px,
+    #10120f 6px 7px,
+    transparent 7px 10px,
+    #10120f 10px 14px,
+    transparent 14px 15px,
+    #10120f 15px 16px,
+    transparent 16px 19px,
+    #10120f 19px 20px,
+    transparent 20px 22px,
+    #10120f 22px 26px,
+    transparent 26px 27px,
+    #10120f 27px 28px,
+    transparent 28px 31px
+  );
+}
+
+/* ---- 格② 大标题 ---- */
+.topbar__headline {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 13px 12px 0 14px;
+  overflow: hidden;
+}
+
+.topbar__title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 0.113em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.topbar__meta {
+  display: flex;
+  column-gap: 24px;
+  font-size: 11px;
+  line-height: 14px;
+  white-space: nowrap;
+}
+
+.topbar__metaItem b {
+  font-weight: 700;
+  /* 切换天体时 b 以 key 重挂载 → ~250ms 快速淡入（仅 opacity，字体/颜色/间距不变） */
+  animation: topbar-value-fade 250ms ease-out;
+}
+
+@keyframes topbar-value-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---- 格③④⑤ 状态格 ---- */
+.topbar__cell {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 0 8px 0 28px;
+}
+
+.topbar__value {
+  margin-top: 2px;
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 18px;
+}
+
+.topbar__value--online {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.2px;
+  line-height: 18px;
+  color: var(--accent);
+}
+
+.topbar__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  /* CORE STATUS 红点呼吸：opacity 0.6↔1，2s ease-in-out */
+  animation: topbar-dot-breathe 2s ease-in-out infinite;
+}
+
+@keyframes topbar-dot-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* SEED 值：每 ~7s 轻微闪一次（opacity 1→0.55→1，窗口 ~400ms） */
+.topbar__seed {
+  animation: topbar-seed-flicker 7s linear infinite;
+}
+
+@keyframes topbar-seed-flicker {
+  0%,
+  93% {
+    opacity: 1;
+  }
+  95.5% {
+    opacity: 0.55;
+  }
+  98%,
+  100% {
+    opacity: 1;
+  }
+}
+
+/* 左上角装饰方块：白底黑框（约 14px），嵌在应用外框角上 */
+.topbar__corner {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--line);
+  background: #edf0e8;
+  z-index: 2;
+}

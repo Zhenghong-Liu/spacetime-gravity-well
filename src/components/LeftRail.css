@@ -1,0 +1,208 @@
+/*
+ * LeftRail —— 六张天体卡片（每张约 100px 高，1px 虚线分隔，颜色取 tokens）。
+ * 实测：内容左边距 21px、标题 15px/800、类型行 11px 等宽、hex 8.5px 等宽两行、
+ * 进度行 4px 高轨道 + 两端 10px 等宽小字；选中卡全宽黑底（--bg-selected）。
+ * 动效：选中卡左缘 3px 红色指示条 scaleY 0→1（200ms）；选中时进度条重播
+ * 0→fill 填充（~650ms ease-out，目标值经 --fill 注入）；:active 按压反馈。
+ */
+.leftrail {
+  background: var(--bg-panel);
+  font-family: var(--font-mono);
+  color: var(--ink);
+}
+
+.leftrail__card {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 101px;
+  padding: 11px 8px 9px 13px;
+  border-bottom: 1px dashed var(--line-dash);
+  background: transparent;
+  color: var(--ink);
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.leftrail__card:hover {
+  background: rgba(22, 24, 26, 0.05);
+}
+
+.leftrail__card--selected {
+  background: var(--bg-selected);
+  border-bottom-color: transparent;
+}
+
+.leftrail__card--selected:hover {
+  background: var(--bg-selected);
+}
+
+/* 选中卡左缘红色指示条：3px 宽 × 卡全高，选中时 200ms scaleY 0→1 滑入 */
+.leftrail__card--selected::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--accent-bar);
+  transform-origin: 50% 0;
+  animation: leftrail-indicator-in 200ms ease-out both;
+}
+
+@keyframes leftrail-indicator-in {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+/* 按压反馈：轻微右移 + 背景加深（80ms） */
+.leftrail__card:active {
+  transform: translateX(1px);
+  background: rgba(22, 24, 26, 0.12);
+  transition: background-color 80ms ease, transform 80ms ease;
+}
+
+.leftrail__card--selected:active {
+  background: #000;
+}
+
+/* ---- 首行：[NAME] + 小竖条徽标 ---- */
+.leftrail__cardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.leftrail__cardName {
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  line-height: 16px;
+}
+
+.leftrail__card--selected .leftrail__cardName {
+  color: #e9ede3;
+}
+
+.leftrail__card--selected .leftrail__mark {
+  color: #e9ede3;
+}
+
+/* 4 根小竖条徽标（第 3 根最高），选中卡上为亮白（参考图实测 maxL≈241） */
+.leftrail__mark {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+  margin: 2px 2px 0 0;
+  color: inherit;
+}
+
+.leftrail__mark i {
+  width: 5px;
+  background: currentColor;
+}
+
+.leftrail__mark i:nth-child(1) {
+  height: 10px;
+}
+
+.leftrail__mark i:nth-child(2) {
+  height: 7px;
+}
+
+.leftrail__mark i:nth-child(3) {
+  height: 13px;
+}
+
+.leftrail__mark i:nth-child(4) {
+  height: 6px;
+}
+
+/* ---- 第二行：- TYPE（选中卡红字） ---- */
+.leftrail__cardType {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 12px;
+  color: var(--ink-soft);
+}
+
+.leftrail__card--selected .leftrail__cardType {
+  color: var(--accent-bar);
+}
+
+/* ---- 两行十六进制 ID ---- */
+.leftrail__cardHex {
+  display: block;
+  margin-top: 3px;
+  font-size: 8.4px;
+  line-height: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  color: #8a8f81;
+}
+
+.leftrail__card--selected .leftrail__cardHex {
+  color: #808080;
+}
+
+/* ---- 进度行：数值 + 轨道 + 标签 ---- */
+.leftrail__cardBar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 7px;
+}
+
+.leftrail__barVal {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 10px;
+  color: var(--ink);
+}
+
+.leftrail__card--selected .leftrail__barVal {
+  color: #e9ede3;
+}
+
+.leftrail__barTrack {
+  position: relative;
+  flex: 1;
+  height: 4px;
+  overflow: hidden;
+  background: var(--track);
+}
+
+.leftrail__card--selected .leftrail__barTrack {
+  background: #353931;
+}
+
+.leftrail__barFill {
+  position: absolute;
+  inset: 0;
+  background: var(--ink);
+  transform-origin: left center;
+  transition: transform 650ms cubic-bezier(0.25, 0.6, 0.3, 1);
+  will-change: transform;
+}
+
+.leftrail__card--selected .leftrail__barFill {
+  background: var(--accent-bar);
+  /* 卡片变为选中时重播 0→fill 填充动画（~650ms ease-out）；
+     非选中卡保持内联静态 transform 不变 */
+  animation: leftrail-fill-replay 650ms cubic-bezier(0.25, 0.6, 0.3, 1) both;
+}
+
+@keyframes leftrail-fill-replay {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(var(--fill, 1));
+  }
+}
