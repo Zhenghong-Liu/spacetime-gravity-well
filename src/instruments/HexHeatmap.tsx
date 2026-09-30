@@ -228,8 +228,6 @@ export default function HexHeatmap({ body }: { body: CelestialBody }) {
     <svg
       className="heat__svg"
       viewBox="0 0 267 94"
-      width={267}
-      height={94}
       aria-hidden
     >
       <defs>

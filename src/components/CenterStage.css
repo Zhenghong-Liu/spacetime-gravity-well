@@ -5,6 +5,11 @@
  *   读数行距 16.5px · 标签 12px 弱灰 · 值 13.5px 加粗近黑
  *   SINGULARITY ENGINE 22px · 底部等宽行 11px 红橙
  * 叠加层全部 pointer-events:none，保证 three.js 轨道拖拽/滚轮不被遮挡。
+ *
+ * 自适应：顶部标题与右上读数同处 .stage__hud 这一条 flex 行（不再各自 absolute 定位），
+ *   所以两者永远不会互相压字；读数 margin-left:auto 恒贴右缘，且右内边距 26px
+ *   让它落在右上角括号**内侧**（括号竖臂画在 right:18px 处，读数止于其左 7px）。
+ *   视口窄到放不下时整块读数换行到标题下方，仍然右对齐、仍然不碰任何括号。
  */
 
 .stage {
@@ -67,23 +72,38 @@
   border-right: 1px solid var(--ink);
 }
 
-/* ---- 左上：大红标题 + 02.2 + SIMULATION CORE VER. ---- */
+/* ---- 顶部一行：左 = 大红标题 + 02.2 + SIMULATION CORE VER.，右 = 三行读数 ---- */
+
+.stage__hud {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  /* 换行后两行都贴顶堆叠，不要被 align-content:stretch 拉满整栏高 */
+  align-content: flex-start;
+  gap: 10px 24px;
+  /* 上 15 / 左 20 = 参考图标题位；右 26px 把读数收进右上角括号内侧 */
+  padding: 15px 26px 0 20px;
+  pointer-events: none;
+}
 
 .stage__headlineBlock {
-  position: absolute;
-  top: 12px;
-  left: 20px;
-  pointer-events: none;
+  flex: none;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .stage__headline {
   font-family: var(--font-display);
-  font-size: 30px;
+  /* 视口变窄时标题先缩字，缩到 19px 仍放不下才由读数换行让位 */
+  font-size: clamp(19px, 2.1vw, 30px);
   font-weight: 900;
   line-height: 1.1;
   letter-spacing: 0.08em;
   color: var(--accent);
   white-space: nowrap;
+  overflow: hidden;
 }
 
 .stage__version {
@@ -107,13 +127,11 @@
   color: var(--accent);
 }
 
-/* ---- 右上：三行读数（标签弱灰 + 值加粗近黑，两列各自右对齐） ---- */
+/* ---- 三行读数（标签弱灰 + 值加粗近黑，两列各自右对齐） ---- */
 
 .stage__readouts {
-  position: absolute;
-  top: 16px;
-  right: 6px;
-  pointer-events: none;
+  flex: none;
+  margin-left: auto;
 }
 
 .stage__readout {

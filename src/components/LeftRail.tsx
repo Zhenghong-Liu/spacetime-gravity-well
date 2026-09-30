@@ -22,11 +22,19 @@ const BAR_RENDER_PCT: Record<string, number> = {
 };
 
 /**
- * 左栏天体列表（6 张整行可点卡片，卡片间 1px 虚线分隔）：
+ * 左栏天体列表 —— 排版逐行按 reference.png 实测（CSS px，栏宽 267）：
+ * 卡片是「等距槽位」而不是「撑满的内容块」。参考图把整栏切成 7 个等高槽位，
+ * 前 6 个放卡片，第 7 个是末尾空槽（虚线只画到第 6 张卡下面），所以再高的窗口
+ * 也只是槽位等比变长，卡片内部的行距不会被拉开 —— 这里用 flex:1 的 6 个卡片项
+ * + 1 个 tail 项复现。末尾空槽不参与等分，固定占整栏 7.5%（≈ 半张卡）：
+ * 参考图那一格与卡片等高（1/7）是 820 高画布的比例，窗口更高时按等分会让栏底
+ * 空白跟着翻倍，按百分比则始终是同一块留白。
+ * 卡内行位（相对卡顶）：标题 11 / 「- TYPE」29 / hex 两行 47·59 / 进度行 77，
+ * 虚线压在进度行下方 12px 处（参考图 86），卡顶到虚线之间的空隙属于卡片本体，
+ * 黑底选中卡铺满整个槽位（参考图黑块高度 = 槽位高度，不是内容高度）。
  * 首行 “[NAME]” 粗体 + 右侧 4 根小竖条徽标；第二行 “- TYPE” 等宽（选中卡红字）；
  * 两行弱灰等宽 hex；进度行 = barPercent 数值 + 细轨道条 + barLeft 标签。
- * 选中卡黑底白字、红进度填充：左缘 3px 红色指示条 scaleY 0→1 滑入（200ms），
- * 进度条重播 0→fill 填充动画（~650ms ease-out，目标值经 --fill 注入 CSS 动画）；
+ * 动效：选中时进度条重播 0→fill 填充（~650ms ease-out，目标值经 --fill 注入）；
  * 非选中卡保持静态填充；卡片 :active 轻微按压反馈。
  */
 export default function LeftRail({ bodies, selectedId, onSelect }: {
@@ -48,49 +56,56 @@ export default function LeftRail({ bodies, selectedId, onSelect }: {
           const selected = body.id === selectedId;
           const fill = BAR_RENDER_PCT[body.id] ?? body.barPercent;
           return (
-            <li key={body.id}>
+            <li
+              key={body.id}
+              className={
+                selected ? 'leftrail__item leftrail__item--selected' : 'leftrail__item'
+              }
+            >
               <button
                 type="button"
-                className={
-                  selected ? 'leftrail__card leftrail__card--selected' : 'leftrail__card'
-                }
+                className={selected ? 'leftrail__card leftrail__card--selected' : 'leftrail__card'}
                 onClick={() => onSelect(body.id)}
                 aria-pressed={selected}
               >
-                <span className="leftrail__cardHead">
-                  <span className="leftrail__cardName">[{shortName(body)}]</span>
-                  <span className="leftrail__mark" aria-hidden="true">
-                    <i />
-                    <i />
-                    <i />
-                    <i />
+                <span className="leftrail__cardBody">
+                  <span className="leftrail__cardHead">
+                    <span className="leftrail__cardName">[{shortName(body)}]</span>
+                    <span className="leftrail__mark" aria-hidden="true">
+                      <i />
+                      <i />
+                      <i />
+                      <i />
+                    </span>
                   </span>
-                </span>
-                <span className="leftrail__cardType">- {body.typeLabel}</span>
-                <span className="leftrail__cardHex">
-                  {body.hexTop}
-                  <br />
-                  {body.hexBottom}
-                </span>
-                <span className="leftrail__cardBar">
-                  <span className="leftrail__barVal">{body.barPercent}</span>
-                  <span className="leftrail__barTrack">
-                    <span
-                      className="leftrail__barFill"
-                      style={
-                        {
-                          transform: `scaleX(${armed ? fill / 100 : 0})`,
-                          '--fill': String(fill / 100),
-                        } as CSSProperties
-                      }
-                    />
+                  <span className="leftrail__cardType">- {body.typeLabel}</span>
+                  <span className="leftrail__cardHex">
+                    {body.hexTop}
+                    <br />
+                    {body.hexBottom}
                   </span>
-                  <span className="leftrail__barVal">{body.barLeft}</span>
+                  <span className="leftrail__cardBar">
+                    <span className="leftrail__barVal">{body.barPercent}</span>
+                    <span className="leftrail__barTrack">
+                      <span
+                        className="leftrail__barFill"
+                        style={
+                          {
+                            transform: `scaleX(${armed ? fill / 100 : 0})`,
+                            '--fill': String(fill / 100),
+                          } as CSSProperties
+                        }
+                      />
+                    </span>
+                    <span className="leftrail__barVal">{body.barLeft}</span>
+                  </span>
                 </span>
               </button>
             </li>
           );
         })}
+        {/* 参考图末尾的第 7 个空槽：固定占整栏 7.5%，虚线不画在它下面 */}
+        <li className="leftrail__item leftrail__item--tail" aria-hidden="true" />
       </ul>
     </nav>
   );

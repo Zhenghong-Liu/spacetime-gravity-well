@@ -222,8 +222,6 @@ export default function AccretionDial({ body }: { body: CelestialBody }) {
     <svg
       className="dial__svg"
       viewBox="0 0 304 264"
-      width={304}
-      height={264}
       aria-hidden
     >
       {/* 指示线 */}

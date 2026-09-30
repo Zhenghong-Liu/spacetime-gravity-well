@@ -30,13 +30,15 @@
     'Helvetica Neue', Helvetica, Arial, sans-serif;
   --font-mono: 'Courier New', Courier, monospace;
 
-  /* 布局 */
+  /* 布局
+     栏宽在参考图实测值（267 / 306 @ 1440 视口）与窄屏下限之间随视口连续收缩，
+     窄屏下腾出的宽度全部还给中间视口；栏内面板都是流式宽度，所以缩放不会切边。 */
   --frame-w: 2px;
   --canvas-top: 9px;
   --canvas-left: 6px;
   --canvas-right: 5px;
   --topbar-h: 80px;
   --bottombar-h: 38px;
-  --rail-left-w: 267px;
-  --rail-right-w: 306px;
+  --rail-left-w: clamp(212px, 18.6vw, 267px);
+  --rail-right-w: clamp(240px, 21.3vw, 306px);
 }

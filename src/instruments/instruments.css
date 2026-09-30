@@ -1,14 +1,15 @@
 /*
  * 右栏三仪表样式（ShearScope / AccretionDial / HexHeatmap）。
  * 仪表局部色值按 reference.png 取样，作用域收敛在各自类内，不进全局。
+ * 尺寸：三张仪表都铺满各自的 .rightrail__plot 占位（位置/高度由 RightRail.css 给），
+ * SVG 靠 viewBox 等比缩放（preserveAspectRatio 默认 xMidYMid meet）保持画框不变形。
  */
 
 /* ===== 1. GRAVITATIONAL SHEAR GRADIENT —— 示波器 ===== */
 .shear {
   position: relative;
-  margin: 12px 0 0 18px;
-  width: 267px;
-  height: 143px;
+  width: 100%;
+  height: 100%;
   background: #c0c9bf;
   border: 1px solid #969d90;
 }
@@ -54,7 +55,8 @@
 /* ===== 2. MASS ACCRETION FLOW RATE —— 圆形表盘 ===== */
 .dial__svg {
   display: block;
-  margin: 10px 0 0 7px;
+  width: 100%;
+  height: 100%;
 }
 
 .dial__ring {
@@ -116,7 +118,8 @@
 /* ===== 3. TEMPERATURE DISTRIBUTION —— 蜂窝热图 ===== */
 .heat__svg {
   display: block;
-  margin: 15px 0 0 18px;
+  width: 100%;
+  height: 100%;
 }
 
 .heat__lbl text {

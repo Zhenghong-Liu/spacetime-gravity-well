@@ -93,26 +93,28 @@ export default function CenterStage({ body }: { body: CelestialBody }) {
       <i className="stage__corner stage__corner--bl" aria-hidden="true" />
       <i className="stage__corner stage__corner--br" aria-hidden="true" />
 
-      <header className="stage__headlineBlock">
-        <h1 key={body.id} className="stage__headline">{body.headline}</h1>
-        <p className="stage__version">02.2</p>
-        <p className="stage__corever">SIMULATION CORE VER. 02.2</p>
-      </header>
+      <div className="stage__hud">
+        <header className="stage__headlineBlock">
+          <h1 key={body.id} className="stage__headline">{body.headline}</h1>
+          <p className="stage__version">02.2</p>
+          <p className="stage__corever">SIMULATION CORE VER. 02.2</p>
+        </header>
 
-      <dl className="stage__readouts">
-        <div className="stage__readout">
-          <dt className="stage__readoutLabel">EVENT HORIZON DISTANCE:</dt>
-          <dd className="stage__readoutValue">{fmtHorizon(horizon)}</dd>
-        </div>
-        <div className="stage__readout">
-          <dt className="stage__readoutLabel">JET ALIGNMENT:</dt>
-          <dd className="stage__readoutValue">{fmtEscape(escape)}</dd>
-        </div>
-        <div className="stage__readout">
-          <dt className="stage__readoutLabel">FIELD DISTORTION:</dt>
-          <dd key={`fd-${distortion}`} className="stage__readoutValue">{distortion}</dd>
-        </div>
-      </dl>
+        <dl className="stage__readouts">
+          <div className="stage__readout">
+            <dt className="stage__readoutLabel">EVENT HORIZON DISTANCE:</dt>
+            <dd className="stage__readoutValue">{fmtHorizon(horizon)}</dd>
+          </div>
+          <div className="stage__readout">
+            <dt className="stage__readoutLabel">JET ALIGNMENT:</dt>
+            <dd className="stage__readoutValue">{fmtEscape(escape)}</dd>
+          </div>
+          <div className="stage__readout">
+            <dt className="stage__readoutLabel">FIELD DISTORTION:</dt>
+            <dd key={`fd-${distortion}`} className="stage__readoutValue">{distortion}</dd>
+          </div>
+        </dl>
+      </div>
 
       <footer className="stage__engine">
         <p className="stage__engineTitle">SINGULARITY ENGINE</p>

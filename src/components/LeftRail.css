@@ -1,72 +1,81 @@
 /*
- * LeftRail —— 六张天体卡片（每张约 100px 高，1px 虚线分隔，颜色取 tokens）。
- * 实测：内容左边距 21px、标题 15px/800、类型行 11px 等宽、hex 8.5px 等宽两行、
- * 进度行 4px 高轨道 + 两端 10px 等宽小字；选中卡全宽黑底（--bg-selected）。
- * 动效：选中卡左缘 3px 红色指示条 scaleY 0→1（200ms）；选中时进度条重播
- * 0→fill 填充（~650ms ease-out，目标值经 --fill 注入）；:active 按压反馈。
+ * LeftRail —— 六张天体卡片 + 末尾一个空槽，卡片等分栏高、空槽按百分比留白（1px 虚线分隔，颜色取 tokens）。
+ * 实测（reference.png @2x / 2，栏宽 267、槽位 101）：内容左边距 14、右边距 15；
+ * 卡内行位相对卡顶 = 标题 11 / 类型行 29 / hex 两行 47·59 / 进度行 77，
+ * 虚线在卡顶下 86px 处（进度行下方），虚线到下一张卡顶之间是 15px 空档；
+ * 标题 13.5px/900、类型行 10px 等宽粗体、hex 8.4px 等宽两行、进度行 4px 轨道 + 两端 10px 小字。
+ * 选中卡：整槽黑底（--bg-selected，黑块高度 = 槽位高度而不是内容高度）、白字红类型行红进度，
+ * 不画虚线；参考图没有任何左侧色条，选中状态只靠反色表达。
+ * 自适应：6 张卡片 flex:1 等分「栏高 − 末尾 7.5%」，所以比参考图更高的窗口里富余
+ * 空间长进卡片槽位而不是拉开卡内行距；末尾空白固定百分比，不随窗口高度翻倍。
+ * 动效：选中时进度条重播 0→fill 填充（~650ms ease-out，目标值经 --fill 注入）；:active 按压反馈。
  */
 .leftrail {
+  display: flex;
+  flex-direction: column;
   background: var(--bg-panel);
   font-family: var(--font-mono);
   color: var(--ink);
 }
 
-.leftrail__card {
-  position: relative;
-  display: block;
-  width: 100%;
-  min-height: 101px;
-  padding: 11px 8px 9px 13px;
-  border-bottom: 1px dashed var(--line-dash);
-  background: transparent;
-  color: var(--ink);
-  transition: background-color 120ms ease, color 120ms ease;
+.leftrail__list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
 }
 
-.leftrail__card:hover {
+/* 槽位：6 张卡等分「整栏 − 末尾空槽」；黑底铺满整槽，所以背景挂在 li 上 */
+.leftrail__item {
+  display: flex;
+  flex: 1 1 0;
+  min-height: 96px;
+}
+
+.leftrail__item--selected {
+  background: var(--bg-selected);
+}
+
+.leftrail__item--tail {
+  /* 末尾空槽 = 整栏的 7.5%（≈ 半张卡），不跟卡片一起等分：
+     参考图里这一格和卡片等高（1/7 ≈ 14.3%），但那是 820 高的画布；
+     窗口更高时按等分会让栏底空白一起放大，所以改成固定百分比。 */
+  flex: 0 0 7.5%;
+  min-height: 0;
+}
+
+/* 卡片按钮铺满槽位（整槽可点），内容块只占自己那一截并顶对齐 */
+.leftrail__card {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  width: 100%;
+  background: transparent;
+  color: var(--ink);
+}
+
+.leftrail__item:hover:not(.leftrail__item--selected) {
   background: rgba(22, 24, 26, 0.05);
 }
 
-.leftrail__card--selected {
-  background: var(--bg-selected);
+.leftrail__cardBody {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  width: 100%;
+  padding: 11px 15px 0 14px;
+  border-bottom: 1px dashed var(--line-dash);
+  transition: transform 80ms ease;
+}
+
+.leftrail__card--selected .leftrail__cardBody {
   border-bottom-color: transparent;
 }
 
-.leftrail__card--selected:hover {
-  background: var(--bg-selected);
-}
-
-/* 选中卡左缘红色指示条：3px 宽 × 卡全高，选中时 200ms scaleY 0→1 滑入 */
-.leftrail__card--selected::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 3px;
-  height: 100%;
-  background: var(--accent-bar);
-  transform-origin: 50% 0;
-  animation: leftrail-indicator-in 200ms ease-out both;
-}
-
-@keyframes leftrail-indicator-in {
-  from {
-    transform: scaleY(0);
-  }
-  to {
-    transform: scaleY(1);
-  }
-}
-
-/* 按压反馈：轻微右移 + 背景加深（80ms） */
-.leftrail__card:active {
+/* 按压反馈：内容块轻微右移（80ms） */
+.leftrail__card:active .leftrail__cardBody {
   transform: translateX(1px);
-  background: rgba(22, 24, 26, 0.12);
-  transition: background-color 80ms ease, transform 80ms ease;
-}
-
-.leftrail__card--selected:active {
-  background: #000;
 }
 
 /* ---- 首行：[NAME] + 小竖条徽标 ---- */
@@ -78,10 +87,10 @@
 
 .leftrail__cardName {
   font-family: var(--font-display);
-  font-size: 14.5px;
+  font-size: 13.5px;
   font-weight: 900;
   letter-spacing: -0.5px;
-  line-height: 16px;
+  line-height: 15px;
 }
 
 .leftrail__card--selected .leftrail__cardName {
@@ -92,12 +101,12 @@
   color: #e9ede3;
 }
 
-/* 4 根小竖条徽标（第 3 根最高），选中卡上为亮白（参考图实测 maxL≈241） */
+/* 4 根小竖条徽标（第 3 根最高），与标题基线齐平，选中卡上为亮白（参考图实测 maxL≈241） */
 .leftrail__mark {
   display: flex;
   align-items: flex-start;
   gap: 2px;
-  margin: 2px 2px 0 0;
+  margin: 6px 2px 0 0;
   color: inherit;
 }
 
@@ -125,7 +134,7 @@
 /* ---- 第二行：- TYPE（选中卡红字） ---- */
 .leftrail__cardType {
   display: block;
-  margin-top: 3px;
+  margin-top: 2px;
   font-size: 10px;
   font-weight: 700;
   line-height: 12px;
@@ -139,7 +148,7 @@
 /* ---- 两行十六进制 ID ---- */
 .leftrail__cardHex {
   display: block;
-  margin-top: 3px;
+  margin-top: 6px;
   font-size: 8.4px;
   line-height: 12px;
   white-space: nowrap;
@@ -156,7 +165,8 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  margin-top: 7px;
+  height: 12px;
+  margin-top: 6px;
 }
 
 .leftrail__barVal {
