@@ -18,7 +18,7 @@
  */
 import * as THREE from 'three';
 import type { CelestialBody } from '../data/bodies';
-import { getPhysics, circularL, type BodyPhysics } from './physics';
+import { getPhysics, keplerOmega, type BodyPhysics } from './physics';
 import { getVisual, type BodyVisual } from './bodyVisuals';
 import {
   sheetHeight, seatSphere, IDLE_FRONT, FRONT_GONE, AZ_MODES,
@@ -50,7 +50,10 @@ const DUST_COUNT = 260;
 const BLOCK_COUNT = 12;
 /** 受引力势驱动的轨道粒子数 */
 const TRAFFIC_COUNT = 260;
-/** 粒子积分的时间放大倍率：真实开普勒率在屏幕上太慢，整体等比加速不改变轨道形状 */
+/** 粒子在膜面上方悬起的高度系数 */
+const HOVER_GAIN = 0.55;
+/** 角向积分的时间放大倍率：真实开普勒率在屏幕上太慢，整体等比加速不改变轨道形状。
+ *  只作用于 θ̇；径向吸积速度按墙上时钟计，不受它影响。 */
 const ORBIT_TIME_SCALE = 2.6;
 /** 积分子步，保证最内圈 ω·dt ≪ 1 */
 const ORBIT_SUBSTEPS = 4;
@@ -73,7 +76,7 @@ interface RunParams {
   dust: number;
   blocks: number;
   traffic: number;
-  inflow: number;
+  accretion: number;
   dark: number;
   fov: number;
   camPolar: number;
@@ -97,7 +100,7 @@ function snapshot(phys: BodyPhysics, vis: BodyVisual, out: RunParams): RunParams
   out.dust = vis.decor.dustOpacity;
   out.blocks = vis.decor.blocksOpacity;
   out.traffic = vis.decor.trafficOpacity;
-  out.inflow = vis.decor.inflow;
+  out.accretion = vis.decor.accretionSpeed;
   out.dark = vis.sphere.dark;
   out.fov = vis.camera.fov;
   out.camPolar = vis.camera.polarDeg;
@@ -122,7 +125,7 @@ function copyParams(src: RunParams, dst: RunParams): RunParams {
   dst.dust = src.dust;
   dst.blocks = src.blocks;
   dst.traffic = src.traffic;
-  dst.inflow = src.inflow;
+  dst.accretion = src.accretion;
   dst.dark = src.dark;
   dst.fov = src.fov;
   dst.camPolar = src.camPolar;
@@ -138,7 +141,7 @@ function copyParams(src: RunParams, dst: RunParams): RunParams {
 function newRunParams(): RunParams {
   return {
     mu: 0, coreR: 1, depth: 1, spin: 0, waveAmp: 0, discR: 24,
-    gridOpacity: 0.6, dust: 0, blocks: 0, traffic: 0, inflow: 0, dark: 0,
+    gridOpacity: 0.6, dust: 0, blocks: 0, traffic: 0, accretion: 0.2, dark: 0,
     fov: 34, camPolar: 76, camRadius: 16, camAzimuth: 42, targetYFrac: 0.45,
     bg: new THREE.Color(), gridColor: new THREE.Color(), wireColor: new THREE.Color(),
   };
@@ -204,17 +207,17 @@ export class SpaceScene {
   private blockMaterial: THREE.PointsMaterial;
   private blockVelocities: Float32Array;
 
-  /* 轨道粒子：(r, θ, vr, L, hover) —— 在中心力场里做数值积分 */
+  /* 轨道粒子：(r, θ, 吸积速度倍率, 角动量比, 离面高度) —— 定常吸积盘 */
   private traffic: THREE.Points;
   private trafficMaterial: THREE.PointsMaterial;
   private tR = new Float32Array(TRAFFIC_COUNT);
   private tTheta = new Float32Array(TRAFFIC_COUNT);
-  private tVr = new Float32Array(TRAFFIC_COUNT);
-  private tL = new Float32Array(TRAFFIC_COUNT);
+  /** 每颗粒子各自的吸积速度倍率：打散节奏，避免整盘像刚体一样同步内落 */
+  private tDrift = new Float32Array(TRAFFIC_COUNT);
+  /** L / L_圆轨道(r)，恒 < 1 —— 略欠速才一直在向内落 */
+  private tLk = new Float32Array(TRAFFIC_COUNT);
   private tHover = new Float32Array(TRAFFIC_COUNT);
   private trafficRng = mulberry32(7301);
-  /** 上一帧粒子状态所对应的 μ，用于切换时把 L/ṙ 换算到新势场 */
-  private trafficMu = 0;
 
   private disposables: Array<{ dispose(): void }> = [];
 
@@ -584,8 +587,8 @@ export class SpaceScene {
   }
 
   /** 投放一颗测试粒子：半径按吸积盘面密度 ∝ r^-1.15 采样（越靠喉口越密），
-   *  比角动量取接近圆轨道的值，剩余径向速度造成缓慢旋进。 */
-  private spawnTraffic(i: number, mu: number, coreR: number, discR: number): void {
+   *  角动量取当地圆轨道的 0.82~1.0 倍 —— 欠下的那一角动量正是它内落的原因。 */
+  private spawnTraffic(i: number, coreR: number, discR: number): void {
     const rng = this.trafficRng;
     const rIn = coreR * 2.2 + 1.2;
     const rOut = Math.max(rIn + 2.5, Math.min(discR * 0.55, 14));
@@ -597,17 +600,16 @@ export class SpaceScene {
     );
     this.tR[i] = r;
     this.tTheta[i] = rng() * Math.PI * 2;
-    this.tVr[i] = (rng() * 2 - 1) * 0.12 * Math.sqrt(mu / Math.max(r, 1));
-    this.tL[i] = circularL(r, mu, coreR) * (0.86 + rng() * 0.22);
+    this.tDrift[i] = 0.85 + rng() * 0.3;
+    this.tLk[i] = 0.82 + rng() * 0.18;
     this.tHover[i] = 0.05 + rng() * 0.3;
   }
 
   /** 全部粒子重新投放到当前天体允许的轨道带内 */
   private resetTraffic(): void {
     for (let i = 0; i < TRAFFIC_COUNT; i++) {
-      this.spawnTraffic(i, this.cur.mu, this.cur.coreR, this.cur.discR);
+      this.spawnTraffic(i, this.cur.coreR, this.cur.discR);
     }
-    this.trafficMu = this.cur.mu;
   }
 
   private buildTrafficGeometry(): THREE.BufferGeometry {
@@ -620,66 +622,47 @@ export class SpaceScene {
   }
 
   /**
-   * 轨道粒子积分：中心力场里的二体问题（单位质量）
-   *   r̈ = -μr/(r²+a²)^1.5 + L²/r³ - c_r·ṙ
-   *   θ̇ = L/r²,  L̇ = -c_L·L   （黏性损耗角动量 → 螺旋内落 = 吸积）
-   * ω = θ̇ = L/r² 严格随半径平方反比增大 —— 这就是「半径越小转得越快」的来源；
-   * 势与膜高共用同一组 (μ, a)，所以粒子是真的沿着屏幕上那张势面在跑。
+   * 轨道粒子：定常（稳态）吸积盘。
+   *   ṙ = −v_acc · k_i        一型天体一个恒定吸入速度，全程不累加、不越吸越快
+   *   θ̇ = f_i · ω_K(r)        ω_K = √(μ/(r²+a²)^1.5)，与膜高共用同一组 (μ, a)
+   * 稳态的定义就是通过任意半径的质量流相同（ṁ 与 r 无关），所以盘不会越转越快：
+   * 每颗粒子始终待在「当地圆轨道角动量的 f_i 倍」上，一路匀速落到喉口才重生。
+   * 内圈仍然转得飞快 —— 那是**角**速度（开普勒第三定律给的剪切），
+   * 恒定的则是**径向**速度。粒子逐帧按当前 (μ, a) 现算 θ̇，
+   * 所以切换天体时无需再把旧的 L / ṙ 换算到新势场。
    */
-  private updateTraffic(dt: number, mu: number, coreR: number, discR: number, inflow: number): void {
+  private updateTraffic(
+    dt: number, mu: number, coreR: number, discR: number, accretion: number,
+  ): void {
     const attr = this.traffic.geometry.getAttribute('position') as THREE.BufferAttribute;
     const pos = attr.array as Float32Array;
-    const h = (dt * ORBIT_TIME_SCALE) / ORBIT_SUBSTEPS;
-    const radialDrag = inflow * 0.4;
-    const lDecay = Math.max(0, 1 - inflow * 0.2 * h);
+    const hOrbit = (dt * ORBIT_TIME_SCALE) / ORBIT_SUBSTEPS;
+    const hDrift = dt / ORBIT_SUBSTEPS;
     const rPlunge = coreR * 1.25;
     const rEsc = discR * 0.92;
-
-    /* 势场变了（切换天体 / morph 途中每帧都在变）：把每颗粒子的 L 和 ṙ 换算到新场。
-     * 圆轨道角动量 ∝ √μ、特征速度 √(μ/r) ∝ √μ，所以两者同乘 √(μ新/μ旧) 后，
-     * 「相对圆轨道的偏离程度」逐字保持不变 —— 粒子不会记得上一个天体的速度。
-     * 不做这步的话：太阳→黑洞时旧 L 太小会集体坠入（看着快），黑洞→太阳时旧 L 太大
-     * 会集体外抛，要等粒子飘到盘缘重生才恢复，回程就表现为「速度降不下来」。 */
-    const prevMu = this.trafficMu;
-    if (prevMu > 0 && mu > 0 && mu !== prevMu) {
-      const k = Math.sqrt(mu / prevMu);
-      for (let i = 0; i < TRAFFIC_COUNT; i++) {
-        this.tL[i] *= k;
-        this.tVr[i] *= k;
-      }
-    }
-    this.trafficMu = mu;
 
     for (let i = 0; i < TRAFFIC_COUNT; i++) {
       let r = this.tR[i];
       let th = this.tTheta[i];
-      let vr = this.tVr[i];
-      let L = this.tL[i];
+      const drift = accretion * this.tDrift[i];
+      const f = this.tLk[i];
 
       for (let s = 0; s < ORBIT_SUBSTEPS; s++) {
         if (r <= rPlunge) break; // 已坠入视界/星体，交给下面的重生逻辑
-        const d2 = r * r + coreR * coreR;
-        const d32 = d2 * Math.sqrt(d2);
-        const acc = (-mu * r) / d32 + (L * L) / (r * r * r);
-        vr += acc * h;
-        vr -= radialDrag * vr * h;
-        r += vr * h;
-        L *= lDecay;
-        th += (L / (r * r)) * h;
+        r -= drift * hDrift;
+        th += f * keplerOmega(r, mu, coreR) * hOrbit;
       }
 
-      if (r < rPlunge || r > rEsc || !Number.isFinite(r)) {
-        this.spawnTraffic(i, mu, coreR, discR);
+      if (r < rPlunge || r > rEsc) {
+        this.spawnTraffic(i, coreR, discR);
         r = this.tR[i];
         th = this.tTheta[i];
       }
       this.tR[i] = r;
       this.tTheta[i] = th;
-      this.tVr[i] = vr;
-      this.tL[i] = L;
 
       pos[i * 3] = r * Math.cos(th);
-      pos[i * 3 + 1] = sheetHeight(r, th, this.sheet) + this.tHover[i] * (0.35 + 0.65 * inflow);
+      pos[i * 3 + 1] = sheetHeight(r, th, this.sheet) + this.tHover[i] * HOVER_GAIN;
       pos[i * 3 + 2] = r * Math.sin(th);
     }
     attr.needsUpdate = true;
@@ -770,7 +753,7 @@ export class SpaceScene {
     cur.dust = lerp(from.dust, to.dust, e);
     cur.blocks = lerp(from.blocks, to.blocks, e);
     cur.traffic = lerp(from.traffic, to.traffic, e);
-    cur.inflow = lerp(from.inflow, to.inflow, e);
+    cur.accretion = lerp(from.accretion, to.accretion, e);
     cur.dark = lerp(from.dark, to.dark, e);
     cur.fov = lerp(from.fov, to.fov, e);
     cur.camPolar = lerp(from.camPolar, to.camPolar, e);
@@ -888,7 +871,7 @@ export class SpaceScene {
     this.trafficMaterial.opacity = cur.traffic;
     this.traffic.visible = cur.traffic > 0.02;
     if (this.traffic.visible) {
-      this.updateTraffic(dt, cur.mu, cur.coreR, cur.discR, cur.inflow);
+      this.updateTraffic(dt, cur.mu, cur.coreR, cur.discR, cur.accretion);
     }
 
     this.renderer.render(this.scene, this.camera);
